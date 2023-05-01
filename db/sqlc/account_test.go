@@ -64,7 +64,7 @@ func TestDeleteAccountIfUserExists(t *testing.T) {
 }
 
 func TestGetAccountIfUserDoesNotExists(t *testing.T) {
-	acc, err := testQueries.GetAccount(context.Background(), 1)
+	acc, err := testQueries.GetAccount(context.Background(), -1)
 
 	require.EqualError(t, err, sql.ErrNoRows.Error())
 	require.Empty(t, acc)

@@ -34,7 +34,7 @@ func RandomOwner() string {
 }
 
 func RandomMoney() string {
-	return strconv.FormatFloat(RandomFloat(0, 1000), 'f', 2, 64)
+	return strconv.FormatFloat(RandomFloat(100, 1000), 'f', 2, 64)
 }
 
 func RandomCurrency() string {
