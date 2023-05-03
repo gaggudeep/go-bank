@@ -29,7 +29,7 @@ func RandomString(n int) string {
 	return sb.String()
 }
 
-func RandomOwner() string {
+func RandomOwnerName() string {
 	return RandomString(6)
 }
 

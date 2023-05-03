@@ -4,19 +4,19 @@ import (
 	"database/sql"
 	"github.com/gaggudeep/bank_go/api"
 	db "github.com/gaggudeep/bank_go/db/sqlc"
+	"github.com/gaggudeep/bank_go/util"
 	"log"
 
 	_ "github.com/lib/pq"
 )
 
-const (
-	dbDriver   = "postgres"
-	dbSource   = "postgresql://root:password@localhost:5432/bank?sslmode=disable"
-	serverAddr = "localhost:8080"
-)
-
 func main() {
-	dbConn, err := sql.Open(dbDriver, dbSource)
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		log.Fatal("cannot load config: ", err)
+	}
+
+	dbConn, err := sql.Open(config.DBConfig.Driver, config.DBConfig.URL)
 	if err != nil {
 		log.Fatal("cannot connect to db: ", err)
 	}
@@ -24,7 +24,7 @@ func main() {
 	store := db.NewStore(dbConn)
 	server := api.NewServer(store)
 
-	err = server.Start(serverAddr)
+	err = server.Start(config.ServerConfig.Addr)
 	if err != nil {
 		log.Fatal("cannot start server: ", err)
 	}

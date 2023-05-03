@@ -7,19 +7,25 @@ import (
 	"strconv"
 )
 
-type Store struct {
+type Store interface {
+	Querier
+	TransferTxPreventingCircularWait(ctx context.Context,
+		arg TransferTxParams) (TransferTxResult, error)
+}
+
+type SQLStore struct {
 	*Queries
 	db *sql.DB
 }
 
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{
 		db:      db,
 		Queries: New(db),
 	}
 }
 
-func (store *Store) execTx(ctx context.Context, fn func(queries *Queries) error) error {
+func (store *SQLStore) execTx(ctx context.Context, fn func(queries *Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -51,7 +57,28 @@ type TransferTxResult struct {
 	ToTransaction   Transaction `json:"to_transaction"`
 }
 
-func (store *Store) TransferTxPreventingCircularWait(ctx context.Context,
+func transferMoney(ctx context.Context, q *Queries, accID1 *int64, accID2 *int64,
+	amt1 string, amt2 string) (acc1 Account, acc2 Account, err error) {
+	acc1, err = q.AddToAccountBalance(ctx, AddToAccountBalanceParams{
+		ID:     *accID1,
+		Amount: amt1,
+	})
+	if err != nil {
+		return
+	}
+
+	acc2, err = q.AddToAccountBalance(ctx, AddToAccountBalanceParams{
+		ID:     *accID2,
+		Amount: amt2,
+	})
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (store *SQLStore) TransferTxPreventingCircularWait(ctx context.Context,
 	arg TransferTxParams) (TransferTxResult, error) {
 	var res TransferTxResult
 
@@ -107,25 +134,4 @@ func (store *Store) TransferTxPreventingCircularWait(ctx context.Context,
 	})
 
 	return res, err
-}
-
-func transferMoney(ctx context.Context, q *Queries, accID1 *int64, accID2 *int64,
-	amt1 string, amt2 string) (acc1 Account, acc2 Account, err error) {
-	acc1, err = q.AddToAccountBalance(ctx, AddToAccountBalanceParams{
-		ID:     *accID1,
-		Amount: amt1,
-	})
-	if err != nil {
-		return
-	}
-
-	acc2, err = q.AddToAccountBalance(ctx, AddToAccountBalanceParams{
-		ID:     *accID2,
-		Amount: amt2,
-	})
-	if err != nil {
-		return
-	}
-
-	return
 }

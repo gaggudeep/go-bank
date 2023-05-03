@@ -1,0 +1,5 @@
+db:
+    driver: postgres
+    url: postgresql://root:password@localhost:5432/bank?sslmode=disable
+server:
+    address: localhost:8080
