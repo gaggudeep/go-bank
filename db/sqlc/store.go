@@ -52,7 +52,7 @@ type TransferTxParams struct {
 type TransferTxResult struct {
 	Transfer        Transfer    `json:"transfer"`
 	FromAccount     Account     `json:"from_account"`
-	ToAccount       Account     `json:"toA_account"`
+	ToAccount       Account     `json:"to_account"`
 	FromTransaction Transaction `json:"from_transaction"`
 	ToTransaction   Transaction `json:"to_transaction"`
 }
