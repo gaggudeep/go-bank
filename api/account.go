@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	db "github.com/gaggudeep/bank_go/db/sqlc"
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 	"net/http"
 )
 
@@ -24,7 +25,7 @@ type GetAccountsRequest struct {
 func (server *Server) createAccount(ctx *gin.Context) {
 	var req CreateAccountRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResp(err))
+		ctx.JSON(http.StatusBadRequest, parseErrorResp(err))
 		return
 	}
 
@@ -36,7 +37,16 @@ func (server *Server) createAccount(ctx *gin.Context) {
 
 	acc, err := server.store.CreateAccount(ctx, arg)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResp(err))
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code.Name() {
+			case "foreign_key_violation", "unique_violation":
+				ctx.JSON(http.StatusForbidden, parseErrorResp(err))
+				return
+			}
+		}
+
+		ctx.JSON(http.StatusInternalServerError, parseErrorResp(err))
+		return
 	}
 
 	ctx.JSON(http.StatusOK, acc)
@@ -45,17 +55,17 @@ func (server *Server) createAccount(ctx *gin.Context) {
 func (server *Server) getAccount(ctx *gin.Context) {
 	var req GetAccountRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResp(err))
+		ctx.JSON(http.StatusBadRequest, parseErrorResp(err))
 		return
 	}
 
 	acc, err := server.store.GetAccount(ctx, req.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResp(err))
+			ctx.JSON(http.StatusNotFound, parseErrorResp(err))
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, errorResp(err))
+		ctx.JSON(http.StatusInternalServerError, parseErrorResp(err))
 		return
 	}
 
@@ -65,7 +75,7 @@ func (server *Server) getAccount(ctx *gin.Context) {
 func (server *Server) getAccounts(ctx *gin.Context) {
 	var req GetAccountsRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResp(err))
+		ctx.JSON(http.StatusBadRequest, parseErrorResp(err))
 		return
 	}
 
@@ -76,7 +86,7 @@ func (server *Server) getAccounts(ctx *gin.Context) {
 
 	accs, err := server.store.GetAccounts(ctx, arg)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResp(err))
+		ctx.JSON(http.StatusInternalServerError, parseErrorResp(err))
 		return
 	}
 

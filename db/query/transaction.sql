@@ -1,13 +1,7 @@
 -- name: CreateTransaction :one
-INSERT INTO transactions
-    (
-     account_id,
-     amount
-     ) VALUES
-           (
-            $1, $2
-            )
-       RETURNING *;
+INSERT INTO transactions(account_id, amount)
+VALUES($1, $2)
+RETURNING *;
 
 -- name: GetTransaction :one
 SELECT * FROM transactions

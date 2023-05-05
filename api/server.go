@@ -40,6 +40,6 @@ func (server *Server) Start(addr string) error {
 	return server.router.Run(addr)
 }
 
-func errorResp(err error) gin.H {
+func parseErrorResp(err error) gin.H {
 	return gin.H{"error": err.Error()}
 }

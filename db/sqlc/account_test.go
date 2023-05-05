@@ -6,11 +6,13 @@ import (
 	"github.com/gaggudeep/bank_go/util"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
 
 func createRandomAccount(t *testing.T) *Account {
+	user := createRandomUser(t)
 	arg := CreateAccountParams{
-		OwnerName: util.RandomOwnerName(),
+		OwnerName: user.Username,
 		Balance:   util.RandomMoney(),
 		Currency:  util.RandomCurrency(),
 	}
@@ -34,7 +36,11 @@ func TestGetAccount(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotEmpty(t, acc2)
-	require.Equal(t, acc, acc2)
+	require.Equal(t, acc.ID, acc2.ID)
+	require.Equal(t, acc.OwnerName, acc2.OwnerName)
+	require.Equal(t, acc.Balance, acc2.Balance)
+	require.Equal(t, acc.Currency, acc2.Currency)
+	require.WithinDuration(t, acc.CreatedAt, acc2.CreatedAt, time.Second)
 }
 
 func TestAddToAccountBalance(t *testing.T) {

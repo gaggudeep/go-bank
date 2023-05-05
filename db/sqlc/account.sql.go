@@ -35,16 +35,9 @@ func (q *Queries) AddToAccountBalance(ctx context.Context, arg AddToAccountBalan
 }
 
 const createAccount = `-- name: CreateAccount :one
-INSERT INTO accounts
-    (
-     owner_name,
-     balance,
-     currency
-     ) VALUES
-           (
-            $1, $2, $3
-            )
-       RETURNING id, owner_name, balance, currency, created_at
+INSERT INTO accounts(owner_name, balance, currency)
+VALUES($1, $2, $3)
+RETURNING id, owner_name, balance, currency, created_at
 `
 
 type CreateAccountParams struct {

@@ -25,7 +25,7 @@ type Validator struct {
 	Func validator.Func `mapstructure:"func"`
 }
 
-var customValidators = []Validator{
+var CustomValidators = []Validator{
 	{
 		Name: "amount",
 		Func: IsValidAmount,
@@ -47,7 +47,7 @@ func LoadConfig(path string) (config Config, err error) {
 	}
 
 	err = viper.Unmarshal(&config)
-	config.CustomValidators = customValidators
+	config.CustomValidators = CustomValidators
 
 	return
 }
