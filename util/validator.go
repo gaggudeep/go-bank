@@ -6,12 +6,12 @@ import (
 )
 
 func IsValidAmount(fl validator.FieldLevel) bool {
-	amt, ok := fl.Field().Interface().(string)
+	amount, ok := fl.Field().Interface().(string)
 	if !ok {
 		return false
 	}
 
-	floatAmt, err := strconv.ParseFloat(amt, 64)
+	floatAmt, err := strconv.ParseFloat(amount, 64)
 	if err != nil {
 		return false
 	}
