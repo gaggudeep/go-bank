@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	db "github.com/gaggudeep/bank_go/db/sqlc"
 	"github.com/gaggudeep/bank_go/util"
 	"github.com/gin-gonic/gin"
@@ -16,7 +17,7 @@ type CreateUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 }
 
-type CreateUserResponse struct {
+type UserResponse struct {
 	Username          string    `json:"username"`
 	Name              string    `json:"name"`
 	Email             string    `json:"email"`
@@ -58,13 +59,61 @@ func (server *Server) createUser(ctx *gin.Context) {
 		return
 	}
 
-	resp := &CreateUserResponse{
+	resp := newUserResponse(&user)
+
+	ctx.JSON(http.StatusOK, resp)
+}
+
+type LoginRequest struct {
+	Username string `json:"username" binding:"required,alphanum"`
+	Password string `json:"password" binding:"required,min=6"`
+}
+
+type LoginResponse struct {
+	AccessToken string       `json:"access_token"`
+	User        UserResponse `json:"user"`
+}
+
+func (server *Server) loginUser(ctx *gin.Context) {
+	var req LoginRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, parseErrorResp(err))
+		return
+	}
+
+	user, err := server.store.GetUser(ctx, req.Username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, parseErrorResp(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, parseErrorResp(err))
+		return
+	}
+
+	err = util.ValidatePassword(req.Password, user.HashedPassword)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, parseErrorResp(err))
+		return
+	}
+
+	accessToken, err := server.tokenMaker.CreateToken(req.Username,
+		server.config.SecurityConfig.TokenConfig.AccessDuration)
+
+	resp := LoginResponse{
+		AccessToken: accessToken,
+		User:        newUserResponse(&user),
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func newUserResponse(user *db.User) UserResponse {
+	return UserResponse{
 		Username:          user.Username,
 		Name:              user.Name,
 		Email:             user.Email,
 		PasswordChangedAt: user.PasswordChangedAt,
 		CreatedAt:         user.CreatedAt,
 	}
-
-	ctx.JSON(http.StatusOK, resp)
 }

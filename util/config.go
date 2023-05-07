@@ -3,7 +3,15 @@ package util
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
+	"time"
 )
+
+type Config struct {
+	DBConfig         DBConfig       `mapstructure:"db"`
+	ServerConfig     ServerConfig   `mapstructure:"server"`
+	CustomValidators []Validator    `mapstructure:"custom-validators"`
+	SecurityConfig   SecurityConfig `mapstructure:"security"`
+}
 
 type DBConfig struct {
 	Driver string `mapstructure:"driver"`
@@ -14,15 +22,18 @@ type ServerConfig struct {
 	Addr string `mapstructure:"address"`
 }
 
-type Config struct {
-	DBConfig         DBConfig     `mapstructure:"db"`
-	ServerConfig     ServerConfig `mapstructure:"server"`
-	CustomValidators []Validator  `mapstructure:"custom-validators"`
-}
-
 type Validator struct {
 	Name string         `mapstructure:"name"`
 	Func validator.Func `mapstructure:"func"`
+}
+
+type SecurityConfig struct {
+	TokenConfig TokenConfig `mapstructure:"token"`
+}
+
+type TokenConfig struct {
+	SymmetricKey   string        `mapstructure:"symmetric-key"`
+	AccessDuration time.Duration `mapstructure:"access-duration"`
 }
 
 var CustomValidators = []Validator{

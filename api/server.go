@@ -1,7 +1,9 @@
 package api
 
 import (
+	"fmt"
 	db "github.com/gaggudeep/bank_go/db/sqlc"
+	"github.com/gaggudeep/bank_go/token"
 	"github.com/gaggudeep/bank_go/util"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -10,15 +12,31 @@ import (
 )
 
 type Server struct {
-	store  db.Store
-	router *gin.Engine
+	config     util.Config
+	store      db.Store
+	tokenMaker token.Maker
+	router     *gin.Engine
 }
 
-func NewServer(store db.Store, config *util.Config) *Server {
-	server := &Server{store: store}
-	router := gin.Default()
+func NewServer(store db.Store, config *util.Config) (*Server, error) {
+	tokenMaker, err := token.NewPasetoMaker(config.SecurityConfig.TokenConfig.SymmetricKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token maker: %w", err)
+	}
+	server := &Server{
+		config:     *config,
+		store:      store,
+		tokenMaker: tokenMaker,
+	}
 
-	for _, validator := range config.CustomValidators {
+	server.setupValidators()
+	server.setupRouter()
+
+	return server, nil
+}
+
+func (server *Server) setupValidators() {
+	for _, validator := range server.config.CustomValidators {
 		if v, ok := binding.Validator.Engine().(*validator2.Validate); ok {
 			err := v.RegisterValidation(validator.Name, validator.Func)
 			if err != nil {
@@ -26,17 +44,21 @@ func NewServer(store db.Store, config *util.Config) *Server {
 			}
 		}
 	}
+}
+
+func (server *Server) setupRouter() {
+	router := gin.Default()
 
 	router.POST("/users", server.createUser)
+	router.POST("/users/login", server.loginUser)
 
 	router.POST("/accounts", server.createAccount)
 	router.GET("/accounts/:id", server.getAccount)
 	router.GET("/accounts", server.getAccounts)
 
-	router.POST("/transfers", server.createTransfer)
+	router.POST("/transfers", server.Transfer)
 
 	server.router = router
-	return server
 }
 
 func (server *Server) Start(addr string) error {

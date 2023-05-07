@@ -91,10 +91,7 @@ func TestGetAccount(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	store := mockdb.NewMockStore(ctrl)
-	config := &util.Config{
-		CustomValidators: util.CustomValidators,
-	}
-	server := NewServer(store, config)
+	server := newTestServer(t, store)
 
 	for i := range testCases {
 		tc := testCases[i]
