@@ -1,9 +1,0 @@
-db:
-    driver: postgres
-    url: postgresql://root:password@localhost:5432/bank?sslmode=disable
-server:
-    address: localhost:8080
-security:
-    token:
-        symmetric-key: 12345678901234567890123456789012
-        access-duration: 15m

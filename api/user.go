@@ -98,7 +98,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 	}
 
 	accessToken, err := server.tokenMaker.CreateToken(req.Username,
-		server.config.SecurityConfig.TokenConfig.AccessDuration)
+		server.config.TokenAccessDuration)
 
 	resp := LoginResponse{
 		AccessToken: accessToken,

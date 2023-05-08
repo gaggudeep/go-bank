@@ -7,33 +7,20 @@ import (
 )
 
 type Config struct {
-	DBConfig         DBConfig       `mapstructure:"db"`
-	ServerConfig     ServerConfig   `mapstructure:"server"`
-	CustomValidators []Validator    `mapstructure:"custom-validators"`
-	SecurityConfig   SecurityConfig `mapstructure:"security"`
-}
-
-type DBConfig struct {
-	Driver string `mapstructure:"driver"`
-	URL    string `mapstructure:"url"`
+	DBDriver            string        `mapstructure:"DB_DRIVER"`
+	DBUrl               string        `mapstructure:"DB_URL"`
+	ServerAddress       string        `mapstructure:"SERVER_ADDRESS"`
+	TokenSymmetricKey   string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
+	TokenAccessDuration time.Duration `mapstructure:"TOKEN_ACCESS_DURATION"`
+	CustomValidators    []Validator   `mapstructure:"custom-validators"`
 }
 
 type ServerConfig struct {
-	Addr string `mapstructure:"address"`
 }
 
 type Validator struct {
 	Name string         `mapstructure:"name"`
 	Func validator.Func `mapstructure:"func"`
-}
-
-type SecurityConfig struct {
-	TokenConfig TokenConfig `mapstructure:"token"`
-}
-
-type TokenConfig struct {
-	SymmetricKey   string        `mapstructure:"symmetric-key"`
-	AccessDuration time.Duration `mapstructure:"access-duration"`
 }
 
 var CustomValidators = []Validator{
@@ -49,8 +36,8 @@ var CustomValidators = []Validator{
 
 func LoadConfig(path string) (config Config, err error) {
 	viper.AddConfigPath(path)
-	viper.SetConfigFile(path + "/app.yml")
-	viper.SetConfigType("yml")
+	viper.SetConfigFile(path + "/app.env")
+	viper.SetConfigType("env")
 	viper.AutomaticEnv()
 	err = viper.ReadInConfig()
 	if err != nil {

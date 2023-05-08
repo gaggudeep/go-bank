@@ -12,13 +12,9 @@ import (
 
 func newTestServer(t *testing.T, store db.Store) *Server {
 	config := &util.Config{
-		SecurityConfig: util.SecurityConfig{
-			TokenConfig: util.TokenConfig{
-				SymmetricKey:   util.RandomString(32),
-				AccessDuration: time.Minute,
-			},
-		},
-		CustomValidators: util.CustomValidators,
+		TokenSymmetricKey:   util.RandomString(32),
+		TokenAccessDuration: time.Minute,
+		CustomValidators:    util.CustomValidators,
 	}
 
 	server, err := NewServer(store, config)

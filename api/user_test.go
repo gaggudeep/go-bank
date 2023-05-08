@@ -67,8 +67,8 @@ func TestCreateUser(t *testing.T) {
 	testCases := []struct {
 		name       string
 		body       gin.H
-		buildStubs func(store *mockdb.MockStore)
-		checkResp  func(recorder *httptest.ResponseRecorder)
+		buildStubs func(*mockdb.MockStore)
+		checkResp  func(*httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
@@ -90,9 +90,9 @@ func TestCreateUser(t *testing.T) {
 					Times(1).
 					Return(user, nil)
 			},
-			checkResp: func(recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusOK, recorder.Code)
-				requireBodyMatchUser(t, recorder.Body, &user)
+			checkResp: func(rec *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, rec.Code)
+				requireBodyMatchUser(t, rec.Body, &user)
 			},
 		},
 		{
@@ -109,8 +109,8 @@ func TestCreateUser(t *testing.T) {
 					Times(1).
 					Return(db.User{}, sql.ErrConnDone)
 			},
-			checkResp: func(recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			checkResp: func(rec *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, rec.Code)
 			},
 		},
 		{
@@ -127,8 +127,8 @@ func TestCreateUser(t *testing.T) {
 					Times(1).
 					Return(db.User{}, &pq.Error{Code: "23505"})
 			},
-			checkResp: func(recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusForbidden, recorder.Code)
+			checkResp: func(rec *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusForbidden, rec.Code)
 			},
 		},
 		{
@@ -144,8 +144,8 @@ func TestCreateUser(t *testing.T) {
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
-			checkResp: func(recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			checkResp: func(rec *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, rec.Code)
 			},
 		},
 		{
@@ -161,8 +161,8 @@ func TestCreateUser(t *testing.T) {
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
-			checkResp: func(recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			checkResp: func(rec *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, rec.Code)
 			},
 		},
 		{
@@ -178,8 +178,8 @@ func TestCreateUser(t *testing.T) {
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
-			checkResp: func(recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			checkResp: func(rec *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, rec.Code)
 			},
 		},
 	}
@@ -195,7 +195,7 @@ func TestCreateUser(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.buildStubs(store)
 
-			recorder := httptest.NewRecorder()
+			rec := httptest.NewRecorder()
 
 			data, err := json.Marshal(tc.body)
 			require.NoError(t, err)
@@ -203,8 +203,8 @@ func TestCreateUser(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPost, "/users", bytes.NewReader(data))
 			require.NoError(t, err)
 
-			server.router.ServeHTTP(recorder, req)
-			tc.checkResp(recorder)
+			server.router.ServeHTTP(rec, req)
+			tc.checkResp(rec)
 		})
 	}
 }

@@ -90,18 +90,20 @@ func (q *Queries) GetAccount(ctx context.Context, id int64) (Account, error) {
 
 const getAccounts = `-- name: GetAccounts :many
 SELECT id, owner_name, balance, currency, created_at FROM accounts
+WHERE owner_name = $1
 ORDER BY id
-LIMIT $1
-OFFSET $2
+LIMIT $2
+OFFSET $3
 `
 
 type GetAccountsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	OwnerName string `json:"owner_name"`
+	Limit     int32  `json:"limit"`
+	Offset    int32  `json:"offset"`
 }
 
 func (q *Queries) GetAccounts(ctx context.Context, arg GetAccountsParams) ([]Account, error) {
-	rows, err := q.db.QueryContext(ctx, getAccounts, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getAccounts, arg.OwnerName, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

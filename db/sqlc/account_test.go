@@ -77,20 +77,23 @@ func TestGetAccountIfUserDoesNotExists(t *testing.T) {
 }
 
 func TestGetAccounts(t *testing.T) {
+	var lastAcc *Account
 	for i := 0; i < 10; i++ {
-		createRandomAccount(t)
+		lastAcc = createRandomAccount(t)
 	}
 
 	arg := GetAccountsParams{
-		Limit:  5,
-		Offset: 5,
+		OwnerName: lastAcc.OwnerName,
+		Limit:     5,
+		Offset:    0,
 	}
 
 	accounts, err := testQueries.GetAccounts(context.Background(), arg)
 	require.NoError(t, err)
-	require.Len(t, accounts, 5)
+	require.NotEmpty(t, accounts)
 
 	for _, acc := range accounts {
 		require.NotEmpty(t, acc)
+		require.Equal(t, lastAcc.OwnerName, acc.OwnerName)
 	}
 }

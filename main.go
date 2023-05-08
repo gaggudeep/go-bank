@@ -16,7 +16,7 @@ func main() {
 		log.Fatal("cannot load config: ", err)
 	}
 
-	dbConn, err := sql.Open(config.DBConfig.Driver, config.DBConfig.URL)
+	dbConn, err := sql.Open(config.DBDriver, config.DBUrl)
 	if err != nil {
 		log.Fatal("cannot connect to db: ", err)
 	}
@@ -27,7 +27,7 @@ func main() {
 		log.Fatal("cannot create server: ", err)
 	}
 
-	err = server.Start(config.ServerConfig.Addr)
+	err = server.Start(config.ServerAddress)
 	if err != nil {
 		log.Fatal("cannot start server: ", err)
 	}

@@ -2,15 +2,16 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	db "github.com/gaggudeep/bank_go/db/sqlc"
+	"github.com/gaggudeep/bank_go/token"
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
 	"net/http"
 )
 
 type CreateAccountRequest struct {
-	OwnerName string `json:"owner_name" binding:"required"`
-	Currency  string `json:"currency" binding:"required,currency"`
+	Currency string `json:"currency" binding:"required,currency"`
 }
 
 type GetAccountRequest struct {
@@ -19,7 +20,7 @@ type GetAccountRequest struct {
 
 type GetAccountsRequest struct {
 	Page int32 `form:"page" binding:"min=1"`
-	Size int32 `form:"size" binding:"required,min=1,max=100"`
+	Size int32 `form:"page_size" binding:"required,min=1,max=100"`
 }
 
 func (server *Server) createAccount(ctx *gin.Context) {
@@ -29,8 +30,10 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
+	authorizationPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
 	arg := db.CreateAccountParams{
-		OwnerName: req.OwnerName,
+		OwnerName: authorizationPayload.Username,
 		Currency:  req.Currency,
 		Balance:   "0",
 	}
@@ -69,6 +72,13 @@ func (server *Server) getAccount(ctx *gin.Context) {
 		return
 	}
 
+	authorizationPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if acc.OwnerName != authorizationPayload.Username {
+		err := errors.New("account doesn't belong to authenticated user")
+		ctx.JSON(http.StatusUnauthorized, parseErrorResp(err))
+		return
+	}
+
 	ctx.JSON(http.StatusOK, acc)
 }
 
@@ -79,16 +89,18 @@ func (server *Server) getAccounts(ctx *gin.Context) {
 		return
 	}
 
+	authorizationPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
 	arg := db.GetAccountsParams{
-		Limit:  req.Size,
-		Offset: (req.Page - 1) * req.Size,
+		OwnerName: authorizationPayload.Username,
+		Limit:     req.Size,
+		Offset:    (req.Page - 1) * req.Size,
 	}
 
-	accs, err := server.store.GetAccounts(ctx, arg)
+	accounts, err := server.store.GetAccounts(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, parseErrorResp(err))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, accs)
+	ctx.JSON(http.StatusOK, accounts)
 }
