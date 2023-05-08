@@ -1,0 +1,31 @@
+ name: deploy to production
+
+on:
+  push:
+    branches:
+    - 'main'
+
+jobs:
+  build:
+    name: build image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: check out code into the go module directory
+        uses: actions/checkout@v3
+
+      - name: login to github container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghrc.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+
+      - name: build and push docker image
+        env:
+          REGISTRY: ghcr.io
+          GCR_REPOSITORY: gaggudeep/go-bank
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$GCR_REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$GCR_REPOSITORY:$IMAGE_TAG
