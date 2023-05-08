@@ -1,4 +1,3 @@
-
 name: deploy to production
 
 on:
@@ -18,7 +17,7 @@ jobs:
       - name: login to github container registry
         uses: docker/login-action@v1
         with:
-          registry: ghrc.io
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
 
