@@ -1,14 +1,18 @@
-name: ci-test
+name: run unit tests
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches:
+      - 'main'
+      - 'dev'
   pull_request:
-    branches: [ "main", "dev" ]
+    branches:
+      - 'main'
+      - 'dev'
 
 jobs:
-  build:
-    name: Test
+  test:
+    name: test
     runs-on: ubuntu-latest
 
     services:
@@ -27,14 +31,15 @@ jobs:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v3
+      - name: check out code into the go module directory
+        uses: actions/checkout@v3
 
-      - name: Set up Go
+      - name: setup go
         uses: actions/setup-go@v3
         with:
           go-version: ^1.20
 
-      - name: Install golang-migrate
+      - name: install golang-migrate
         run: |
           curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-amd64.tar.gz | tar xvz
           sudo mv migrate /usr/bin/
