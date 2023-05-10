@@ -90,8 +90,9 @@ func TestAuthMiddleware(t *testing.T) {
 
 func addAuthorization(t *testing.T, req *http.Request, maker token.Maker,
 	authScheme string, username string, duration time.Duration) {
-	token, err := maker.CreateToken(username, duration)
+	token, payload, err := maker.CreateToken(username, duration)
 	require.NoError(t, err)
+	require.NotEmpty(t, payload)
 
 	authHeader := fmt.Sprintf("%s %s", authScheme, token)
 	req.Header.Set(authorizationHeaderKey, authHeader)

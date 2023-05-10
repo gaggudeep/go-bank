@@ -7,12 +7,13 @@ import (
 )
 
 type Config struct {
-	DBDriver            string        `mapstructure:"DB_DRIVER"`
-	DBUrl               string        `mapstructure:"DB_URL"`
-	ServerAddress       string        `mapstructure:"SERVER_ADDRESS"`
-	TokenSymmetricKey   string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
-	TokenAccessDuration time.Duration `mapstructure:"TOKEN_ACCESS_DURATION"`
-	CustomValidators    []Validator   `mapstructure:"custom-validators"`
+	DBDriver             string        `mapstructure:"DB_DRIVER"`
+	DBUrl                string        `mapstructure:"DB_URL"`
+	ServerAddress        string        `mapstructure:"SERVER_ADDRESS"`
+	TokenSymmetricKey    string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
+	TokenAccessDuration  time.Duration `mapstructure:"TOKEN_ACCESS_DURATION"`
+	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
+	CustomValidators     []Validator   `mapstructure:"custom-validators"`
 }
 
 type ServerConfig struct {
