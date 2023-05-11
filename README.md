@@ -49,7 +49,19 @@
 
 ### Documentation
 
+- Generate DB documentation:
+    ```bash
+    make db-docs
+    ```
+
 ### How to generate code
+
+- Generate schema SQL file with DBML:
+    ```bash
+    make db-schema
+    ```
+
+
 - Generate SQL CRUD with sqlc:
     ```bash
     make sqlc
