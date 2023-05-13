@@ -8,6 +8,7 @@ import (
 	"github.com/gaggudeep/bank_go/gapi"
 	"github.com/gaggudeep/bank_go/pb"
 	"github.com/gaggudeep/bank_go/util"
+	"github.com/golang-migrate/migrate/v4"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rakyll/statik/fs"
 	"google.golang.org/grpc"
@@ -18,6 +19,8 @@ import (
 	"net/http"
 
 	_ "github.com/gaggudeep/bank_go/doc/statik"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 )
 
@@ -27,14 +30,28 @@ func main() {
 		log.Fatal("cannot load config: ", err)
 	}
 
-	dbConn, err := sql.Open(config.DBDriver, config.DBUrl)
+	dbConn, err := sql.Open(config.DBDriver, config.DBURL)
 	if err != nil {
 		log.Fatal("cannot connect to db: ", err)
 	}
 
+	runDBMigration(config.MigrationURL, config.DBURL)
+
 	store := db.NewStore(dbConn)
 	go runGatewayServer(&config, store)
 	runGrpcServer(&config, store)
+}
+
+func runDBMigration(migrationURL string, dbURL string) {
+	migration, err := migrate.New(migrationURL, dbURL)
+	if err != nil {
+		log.Fatal("cannot create new migration instance: ", err)
+	}
+	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatal("failed to run migrate up: ", err)
+	}
+
+	log.Println("db migrated successfully")
 }
 
 func runGinServer(config *util.Config, store db.Store) {
@@ -43,7 +60,7 @@ func runGinServer(config *util.Config, store db.Store) {
 		log.Fatal("cannot create server: ", err)
 	}
 
-	err = server.Start(config.HttpServerAddress)
+	err = server.Start(config.HTTPServerAddress)
 	if err != nil {
 		log.Fatal("cannot start server: ", err)
 	}
@@ -59,7 +76,7 @@ func runGrpcServer(config *util.Config, store db.Store) {
 	pb.RegisterBankServer(grpcServer, server)
 	reflection.Register(grpcServer)
 
-	listener, err := net.Listen("tcp", config.GrpcServerAddress)
+	listener, err := net.Listen("tcp", config.GRPCServerAddress)
 	if err != nil {
 		log.Fatal("cannot create listener")
 	}
@@ -99,12 +116,12 @@ func runGatewayServer(config *util.Config, store db.Store) {
 
 	statikFS, err := fs.New()
 	if err != nil {
-		log.Fatal("cannot create statik fs: %s", err)
+		log.Fatal("cannot create statik fs: ", err)
 	}
 	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
 	mux.Handle("/swagger/", swaggerHandler)
 
-	listener, err := net.Listen("tcp", config.HttpServerAddress)
+	listener, err := net.Listen("tcp", config.HTTPServerAddress)
 	if err != nil {
 		log.Fatal("cannot create listener: ", err)
 	}

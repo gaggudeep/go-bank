@@ -8,9 +8,10 @@ import (
 
 type Config struct {
 	DBDriver             string        `mapstructure:"DB_DRIVER"`
-	DBUrl                string        `mapstructure:"DB_URL"`
-	HttpServerAddress    string        `mapstructure:"HTTP_SERVER_ADDRESS"`
-	GrpcServerAddress    string        `mapstructure:"GRPC_SERVER_ADDRESS"`
+	DBURL                string        `mapstructure:"DB_URL"`
+	MigrationURL         string        `mapstructure:"MIGRATION_URL"`
+	HTTPServerAddress    string        `mapstructure:"HTTP_SERVER_ADDRESS"`
+	GRPCServerAddress    string        `mapstructure:"GRPC_SERVER_ADDRESS"`
 	TokenSymmetricKey    string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
 	TokenAccessDuration  time.Duration `mapstructure:"TOKEN_ACCESS_DURATION"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
