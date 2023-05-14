@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Bank API",
-    "version": "0.1",
+    "version": "0.2",
     "contact": {
       "name": "Gagandeep Singh",
       "url": "https://github.com/gaggudeep"
@@ -23,7 +23,7 @@
     "/v1/create_user": {
       "post": {
         "summary": "Creates a new user",
-        "operationId": "Bank_CreatUser",
+        "operationId": "Bank_CreateUser",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -78,6 +78,39 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/pbLoginUserRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Bank"
+        ]
+      }
+    },
+    "/v1/update_user": {
+      "patch": {
+        "summary": "Updates an existing user",
+        "operationId": "Bank_UpdateUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pbUpdateUserResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbUpdateUserRequest"
             }
           }
         ],
@@ -146,6 +179,31 @@
         "refreshTokenExpiresAt": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "pbUpdateUserRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "pbUpdateUserResponse": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/pbUser"
         }
       }
     },
