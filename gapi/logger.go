@@ -2,8 +2,6 @@ package gapi
 
 import (
 	"context"
-	cnst "github.com/gaggudeep/bank_go/const"
-	"github.com/gaggudeep/bank_go/const/enum"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
@@ -12,6 +10,33 @@ import (
 	"net/http"
 	"time"
 )
+
+const (
+	ProtocolType = "protocol"
+	Method       = "method"
+	Path         = "path"
+	StatusCode   = "status_code"
+	StatusText   = "status_text"
+	Duration     = "duration"
+	Body         = "body"
+)
+
+type Protocol int8
+
+const (
+	ProtocolHTTP Protocol = iota
+	ProtocolGRPC
+)
+
+func (p Protocol) String() string {
+	switch p {
+	case ProtocolHTTP:
+		return "http"
+	case ProtocolGRPC:
+		return "gRPC"
+	}
+	panic("unknown protocol")
+}
 
 type ResponseRecorder struct {
 	http.ResponseWriter
@@ -50,11 +75,11 @@ func GRPCLogger(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo
 	}
 
 	logger.
-		Str(cnst.LogProtocol, enum.ProtocolGRPC.String()).
-		Str(cnst.LogMethod, info.FullMethod).
-		Int(cnst.LogStatusCode, int(statusCode)).
-		Str(cnst.LogStatusText, statusCode.String()).
-		Dur(cnst.LogDuration, duration).
+		Str(ProtocolType, ProtocolGRPC.String()).
+		Str(Method, info.FullMethod).
+		Int(StatusCode, int(statusCode)).
+		Str(StatusText, statusCode.String()).
+		Dur(Duration, duration).
 		Msg("received a gRPC request")
 
 	return res, err
@@ -73,18 +98,18 @@ func HTTPLogger(handler http.Handler) http.Handler {
 		var logger *zerolog.Event
 		if rec.StatusCode != http.StatusOK {
 			logger = log.Error().
-				Bytes(cnst.LogBody, rec.Body)
+				Bytes(Body, rec.Body)
 		} else {
 			logger = log.Info()
 		}
 
 		logger.
-			Str(cnst.LogProtocol, enum.ProtocolHTTP.String()).
-			Str(cnst.LogMethod, req.Method).
-			Str(cnst.LogPath, req.RequestURI).
-			Int(cnst.LogStatusCode, rec.StatusCode).
-			Str(cnst.LogStatusText, http.StatusText(rec.StatusCode)).
-			Dur(cnst.LogDuration, duration).
+			Str(ProtocolType, ProtocolHTTP.String()).
+			Str(Method, req.Method).
+			Str(Path, req.RequestURI).
+			Int(StatusCode, rec.StatusCode).
+			Str(StatusText, http.StatusText(rec.StatusCode)).
+			Dur(Duration, duration).
 			Msg("received an HTTP request")
 	})
 }

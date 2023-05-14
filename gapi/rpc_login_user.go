@@ -22,26 +22,26 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 	user, err := server.store.GetUser(ctx, req.GetUsername())
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, status.Errorf(codes.NotFound, "user not found: %s", err)
+			return nil, status.Errorf(codes.NotFound, "user not found: %v", err)
 		}
-		return nil, status.Errorf(codes.Internal, "failed to find user: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to find user: %v", err)
 	}
 
 	err = util.ValidatePassword(req.Password, user.HashedPassword)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "password incorrect: %s", err)
+		return nil, status.Errorf(codes.NotFound, "password incorrect: %v", err)
 	}
 
 	accessToken, accessPayload, err := server.tokenMaker.CreateToken(user.Username,
 		server.config.TokenAccessDuration)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create access token: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to create access token: %v", err)
 	}
 
 	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(user.Username,
 		server.config.RefreshTokenDuration)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create refresh token: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to create refresh token: %v", err)
 	}
 
 	mtdt := server.extractMetadata(ctx)
@@ -56,7 +56,7 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 		ExpiresAt:    refreshPayload.ExpiredAt,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create session: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to create session: %v", err)
 	}
 
 	resp := &pb.LoginUserResponse{

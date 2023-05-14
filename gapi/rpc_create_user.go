@@ -6,10 +6,13 @@ import (
 	"github.com/gaggudeep/bank_go/pb"
 	"github.com/gaggudeep/bank_go/util"
 	"github.com/gaggudeep/bank_go/validator"
+	"github.com/gaggudeep/bank_go/worker"
+	"github.com/hibiken/asynq"
 	"github.com/lib/pq"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"time"
 )
 
 func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
@@ -20,29 +23,42 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 
 	hashedPwd, err := util.HashPassword(req.GetPassword())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to hash password: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to hash password: %v", err)
 	}
 
-	arg := db.CreateUserParams{
-		Username:       req.GetUsername(),
-		HashedPassword: hashedPwd,
-		Name:           req.GetName(),
-		Email:          req.GetEmail(),
+	arg := db.CreateUserTxParams{
+		CreateUserParams: db.CreateUserParams{
+			Username:       req.GetUsername(),
+			HashedPassword: hashedPwd,
+			Name:           req.GetName(),
+			Email:          req.GetEmail(),
+		},
+		AfterCreate: func(user db.User) error {
+			payload := &worker.PayloadUserCreationSuccessEmail{
+				Username: user.Username,
+			}
+			opt := []asynq.Option{
+				asynq.MaxRetry(10),
+				asynq.ProcessIn(1 * time.Second),
+				asynq.Queue(worker.QueueCritical),
+			}
+
+			return server.taskDistributor.DistributeSendUserCreationSuccessEmailTask(ctx, payload, opt...)
+		},
 	}
 
-	user, err := server.store.CreateUser(ctx, arg)
+	createUserTxRes, err := server.store.CreateUserTx(ctx, arg)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
-			if pqErr.Code.Name() == "unqiue_violation" {
-				return nil, status.Errorf(codes.AlreadyExists, "username already exists: %s", err)
+			if pqErr.Code.Name() == "unique_violation" {
+				return nil, status.Errorf(codes.AlreadyExists, "duplicate unique field(s): %v", err)
 			}
 		}
-		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
-
+		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
 	}
 
 	resp := &pb.CreateUserResponse{
-		User: convertUser(&user),
+		User: convertUser(&createUserTxRes.User),
 	}
 
 	return resp, nil
